@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.26)
 project(mif17-analyse-d-images)
 
 # Find Packages
-
+find_package(OpenCV REQUIRED)
 
 # Sources, Includes & Libraries
 set(LIBRARY_SOURCES
@@ -25,11 +25,11 @@ set(INCLUDES
         include
 
         # Libraries
-
+        ${OpenCV_INCLUDE_DIRS}
 )
 
 set(LIBRARIES
-
+        ${OpenCV_LIBS}
 )
 
 # Compiler Options
