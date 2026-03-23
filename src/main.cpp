@@ -20,12 +20,14 @@ static void refineSegments(const Mat& img, Mat& mask, Mat& dst)
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
     Mat temp;
+
     dilate(mask, temp, Mat(), Point(-1,-1), niters);
     erode(temp, temp, Mat(), Point(-1,-1), niters*2);
     dilate(temp, temp, Mat(), Point(-1,-1), niters);
     findContours( temp, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE );
     dst = Mat::zeros(img.size(), CV_8UC3);
-    if( contours.size() == 0 )
+
+    if(contours.size() == 0)
         return;
     // iterate through all the top-level contours,
     // draw each connected component with its own random color
@@ -41,21 +43,24 @@ static void refineSegments(const Mat& img, Mat& mask, Mat& dst)
             largestComp = idx;
         }
     }
-    Scalar color(0, 0, 255);
+    Scalar color(255, 255, 255);
     drawContours( dst, contours, largestComp, color, FILLED, LINE_8, hierarchy );
 }
+
 
 int main() {
     try {
         VideoCapture video = VideoCapture("data/Webcam.mp4");
-        Mat tmp_frame, bgmask, out_frame;
-        bool update_bg_model = true;
+        Mat tmp_frame, frame_ycrcb, bgmask, out_frame;
+
+        Ptr<BackgroundSubtractorMOG2> bgsubtractor = createBackgroundSubtractorMOG2();
+        double alpha = 0.005; // MOG2 learning rate - lower = slower but more stable
+        bgsubtractor->setVarThreshold(20); // Background threshold
+        bgsubtractor->setDetectShadows(false);
+        bgsubtractor->setHistory(1000);
 
         namedWindow("video", 1);
         namedWindow("segmented", 1);
-
-        Ptr<BackgroundSubtractorMOG2> bgsubtractor = createBackgroundSubtractorMOG2();
-        bgsubtractor->setVarThreshold(10);
 
         while (video.isOpened()) {
             if (!video.read(tmp_frame)) {
@@ -65,23 +70,20 @@ int main() {
 
             // Current frame processing
 
-            bgsubtractor->apply(tmp_frame, bgmask, update_bg_model ? -1 : 0);
+            // YCrCb is light independent and other channels change less than HSV
+            cvtColor(tmp_frame, frame_ycrcb, COLOR_BGR2YCrCb);
+
+            bgsubtractor->apply(tmp_frame, bgmask, alpha);
             refineSegments(tmp_frame, bgmask, out_frame);
 
             // End of Current frame processing
 
-            imshow("video", tmp_frame);
+            imshow("video", frame_ycrcb);
             imshow("segmented", out_frame);
 
             char keycode = (char)waitKey(30);
             if(keycode == 27)
                 break;
-
-            if(keycode == ' ')
-            {
-                update_bg_model = !update_bg_model;
-                printf("Learn background is in state = %d\n",update_bg_model);
-            }
         }
 
     } catch(const std::exception& exception) {
