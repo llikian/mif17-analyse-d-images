@@ -3,3 +3,4 @@
 .ignore
 bin
 build
+data/*.mp4
