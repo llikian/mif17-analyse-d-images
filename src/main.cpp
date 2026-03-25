@@ -64,8 +64,7 @@ void addLabel(cv::Mat& img, const std::string& text)
     int thickness = 2;
 
     // shadow
-    cv::putText(img, text, cv::Point(11, 31), font, scale, cv::Scalar(0,0,0), thickness+2);
-    cv::putText(img, text, cv::Point(10, 30), font, scale, cv::Scalar(0,255,0), thickness);
+    cv::putText(img, text, cv::Point(10, 30), font, scale, cv::Scalar(255,0,127), thickness);
 }
 
 int main() {
@@ -129,7 +128,7 @@ int main() {
                 cv::hconcat(out_mog, out_vibe, img_bot);
                 cv::vconcat(img_top, img_bot, out_final);
 
-                imshow("final", out_final);
+                imshow("video", out_final);
             }
 
             //// End of Current frame processing
