@@ -19,20 +19,17 @@
 ===================================================================
 */
 
-#include <iostream>
 #include <cstdio>
+#include <iostream>
 #include "opencv2/opencv.hpp"
-
-using namespace cv;
-using namespace std;
 
 // 每个像素点的样本个数默认值
 // the Default Number of pixel's samples
-#define DEFAULT_NUM_SAMPLES  20
+#define DEFAULT_NUM_SAMPLES 20
 
 // #min指数默认值
 // the Default Match Number of make pixel as Background
-#define DEFAULT_MIN_MATCHES  2
+#define DEFAULT_MIN_MATCHES 2
 
 // Sqthere半径默认值
 // the Default Radius of pixel value
@@ -42,8 +39,7 @@ using namespace std;
 // the Default the probability of random sample
 #define DEFAULT_RANDOM_SAMPLE 16
 
-class ViBe
-{
+class ViBe {
 public:
     ViBe(int num_sam = DEFAULT_NUM_SAMPLES,
          int min_match = DEFAULT_MIN_MATCHES,
@@ -53,19 +49,19 @@ public:
 
     // 背景模型初始化
     // Init Background Model.
-    void init(Mat img);
+    void init(cv::Mat img);
 
     // 处理第一帧图像
     // Process First Frame of Video Query
-    void ProcessFirstFrame(Mat img);
+    void ProcessFirstFrame(cv::Mat img);
 
     // 运行 ViBe 算法，提取前景区域并更新背景模型样本库
     // Run the ViBe Algorithm: Extract Foreground Areas & Update Background Model Sample Library.
-    void Run(Mat img);
+    void Run(cv::Mat img);
 
     // 获取前景模型二值图像
     // get Foreground Model Binary Image.
-    Mat getFGModel();
+    cv::Mat getFGModel();
 
     // 删除样本库
     // Delete Sample Library.
@@ -82,11 +78,11 @@ public:
 private:
     // 样本库
     // Sample Library, size = img.rows * img.cols *  DEFAULT_NUM_SAMPLES
-    unsigned char ***samples;
+    unsigned char*** samples;
 
     // 前景模型二值图像
     // Foreground Model Binary Image
-    Mat FGModel;
+    cv::Mat FGModel;
 
     // 每个像素点的样本个数
     // Number of pixel's samples

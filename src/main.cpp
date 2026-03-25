@@ -7,20 +7,19 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/video/background_segm.hpp>
 #include "opencv2/imgproc.hpp"
 #include "opencv2/videoio.hpp"
-#include <opencv2/video/background_segm.hpp>
 
 #include "Vibe.h"
 
-static void mergeAndRefineModels(const Mat& mask1, Mat& mask2, Mat& out)
-{
+static void mergeAndRefineModels(const cv::Mat& mask1, cv::Mat& mask2, cv::Mat& out) {
     bitwise_and(mask1, mask2, out);
 
     int niters = 2;
 
-    dilate(out, out, Mat(), Point(-1,-1), niters);
-    erode(out, out, Mat(), Point(-1,-1), niters);
+    dilate(out, out, cv::Mat(), cv::Point(-1, -1), niters);
+    erode(out, out, cv::Mat(), cv::Point(-1, -1), niters);
 
     // vector<vector<Point> > contours;
     // vector<Vec4i> hierarchy;
@@ -53,29 +52,28 @@ static void mergeAndRefineModels(const Mat& mask1, Mat& mask2, Mat& out)
     // drawContours( out, contours, largestComp, color, FILLED, LINE_8, hierarchy );
 }
 
-
 int main() {
     try {
-        VideoCapture video = VideoCapture("data/Webcam.mp4");
-        Mat tmp_frame, frame_ycrcb, frame_gray,out_vibe, bgmask, out_mog, out_final;
+        cv::VideoCapture video = cv::VideoCapture(0);
+        cv::Mat tmp_frame, frame_ycrcb, frame_gray, out_vibe, bgmask, out_mog, out_final;
 
         ViBe vibe;
         bool count = true;
 
-        Ptr<BackgroundSubtractorMOG2> MOG2Substractor = createBackgroundSubtractorMOG2();
-        double alpha = 0.005; // MOG2 learning rate - lower = slower but more stable
+        cv::Ptr<cv::BackgroundSubtractorMOG2> MOG2Substractor = cv::createBackgroundSubtractorMOG2();
+        double alpha = 0.005;                 // MOG2 learning rate - lower = slower but more stable
         MOG2Substractor->setVarThreshold(20); // Background threshold
         MOG2Substractor->setDetectShadows(false);
         MOG2Substractor->setHistory(1000);
 
-        namedWindow("video", 1);
-        namedWindow("ViBe", 1);
-        namedWindow("MOG2", 1);
-        namedWindow("final", 1);
+        cv::namedWindow("video", 1);
+        cv::namedWindow("ViBe", 1);
+        cv::namedWindow("MOG2", 1);
+        cv::namedWindow("final", 1);
 
-        while (video.isOpened()) {
-            if (!video.read(tmp_frame)) {
-                std::cout << "Can't receive frame (stream end?). Exiting ..." << std::endl;
+        while(video.isOpened()) {
+            if(!video.read(tmp_frame)) {
+                std::cout << "Can't receive frame (stream end?). Exiting ...\n";
                 break;
             }
 
@@ -85,7 +83,7 @@ int main() {
 
             // MOG2 Processing
             // YCrCb is light independent and other channels change less than HSV
-            cvtColor(tmp_frame, frame_ycrcb, COLOR_BGR2YCrCb);
+            cv::cvtColor(tmp_frame, frame_ycrcb, cv::COLOR_BGR2YCrCb);
 
             MOG2Substractor->apply(tmp_frame, out_mog, alpha);
             // MOG2Substractor->apply(tmp_frame, bgmask, alpha);
@@ -93,17 +91,14 @@ int main() {
 
             imshow("MOG2", out_mog);
 
-            //ViBe Processing
-            cvtColor(tmp_frame, frame_gray, COLOR_RGB2GRAY);
-            if (count)
-            {
+            // ViBe Processing
+            cv::cvtColor(tmp_frame, frame_gray, cv::COLOR_RGB2GRAY);
+            if(count) {
                 vibe.init(frame_gray);
                 vibe.ProcessFirstFrame(frame_gray);
-                cout<<"Training ViBe Success."<<endl;
-                count=false;
-            }
-            else
-            {
+                std::cout << "Training ViBe Success." << std::endl;
+                count = false;
+            } else {
                 vibe.Run(frame_gray);
                 out_vibe = vibe.getFGModel();
                 // morphologyEx(FGModel, FGModel, MORPH_OPEN, Mat());
@@ -115,9 +110,8 @@ int main() {
 
             //// End of Current frame processing
 
-            char keycode = (char)waitKey(30);
-            if(keycode == 27)
-                break;
+            char keycode = (char) cv::waitKey(30);
+            if(keycode == 27) { break; }
         }
 
     } catch(const std::exception& exception) {
