@@ -52,10 +52,26 @@ static void mergeAndRefineModels(const cv::Mat& mask1, cv::Mat& mask2, cv::Mat& 
     // drawContours( out, contours, largestComp, color, FILLED, LINE_8, hierarchy );
 }
 
+auto ensureColor = [](cv::Mat& img) {
+    if (img.channels() == 1)
+        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+};
+
+void addLabel(cv::Mat& img, const std::string& text)
+{
+    int font = cv::FONT_HERSHEY_SIMPLEX;
+    double scale = 0.7;
+    int thickness = 2;
+
+    // shadow
+    cv::putText(img, text, cv::Point(11, 31), font, scale, cv::Scalar(0,0,0), thickness+2);
+    cv::putText(img, text, cv::Point(10, 30), font, scale, cv::Scalar(0,255,0), thickness);
+}
+
 int main() {
     try {
         cv::VideoCapture video = cv::VideoCapture(0);
-        cv::Mat tmp_frame, frame_ycrcb, frame_gray, out_vibe, bgmask, out_mog, out_final;
+        cv::Mat tmp_frame, frame_ycrcb, frame_gray, out_vibe, bgmask, out_mog, img_top, img_bot, out_final;
 
         ViBe vibe;
         bool count = true;
@@ -67,9 +83,6 @@ int main() {
         MOG2Substractor->setHistory(1000);
 
         cv::namedWindow("video", 1);
-        cv::namedWindow("ViBe", 1);
-        cv::namedWindow("MOG2", 1);
-        cv::namedWindow("final", 1);
 
         while(video.isOpened()) {
             if(!video.read(tmp_frame)) {
@@ -79,17 +92,11 @@ int main() {
 
             //// Current frame processing
 
-            imshow("video", tmp_frame);
-
             // MOG2 Processing
             // YCrCb is light independent and other channels change less than HSV
             cv::cvtColor(tmp_frame, frame_ycrcb, cv::COLOR_BGR2YCrCb);
 
             MOG2Substractor->apply(tmp_frame, out_mog, alpha);
-            // MOG2Substractor->apply(tmp_frame, bgmask, alpha);
-            // refineSegments(tmp_frame, bgmask, out_mog);
-
-            imshow("MOG2", out_mog);
 
             // ViBe Processing
             cv::cvtColor(tmp_frame, frame_gray, cv::COLOR_RGB2GRAY);
@@ -102,9 +109,26 @@ int main() {
                 vibe.Run(frame_gray);
                 out_vibe = vibe.getFGModel();
                 // morphologyEx(FGModel, FGModel, MORPH_OPEN, Mat());
-                imshow("ViBe", out_vibe);
 
                 mergeAndRefineModels(out_mog, out_vibe, out_final);
+
+                cv::resize(out_final, out_final, tmp_frame.size());
+                cv::resize(out_mog, out_mog, tmp_frame.size());
+                cv::resize(out_vibe, out_vibe, tmp_frame.size());
+
+                ensureColor(out_final);
+                ensureColor(out_mog);
+                ensureColor(out_vibe);
+
+                addLabel(tmp_frame, "Video");
+                addLabel(out_final, "Final");
+                addLabel(out_mog, "MOG2");
+                addLabel(out_vibe, "ViBe");
+
+                cv::hconcat(tmp_frame, out_final, img_top);
+                cv::hconcat(out_mog, out_vibe, img_bot);
+                cv::vconcat(img_top, img_bot, out_final);
+
                 imshow("final", out_final);
             }
 
