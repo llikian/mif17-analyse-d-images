@@ -52,25 +52,31 @@ static void mergeAndRefineModels(const cv::Mat& mask1, cv::Mat& mask2, cv::Mat& 
     // drawContours( out, contours, largestComp, color, FILLED, LINE_8, hierarchy );
 }
 
-auto ensureColor = [](cv::Mat& img) {
-    if (img.channels() == 1)
-        cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+void grayToBGR(cv::Mat& img) {
+    if(img.channels() == 1) { cv::cvtColor(img, img, cv::COLOR_GRAY2BGR); }
 };
 
-void addLabel(cv::Mat& img, const std::string& text)
-{
+void addLabel(cv::Mat& img, const std::string& text) {
     int font = cv::FONT_HERSHEY_SIMPLEX;
     double scale = 0.7;
     int thickness = 2;
 
     // shadow
-    cv::putText(img, text, cv::Point(10, 30), font, scale, cv::Scalar(255,0,127), thickness);
+    cv::putText(img, text, cv::Point(10, 30), font, scale, cv::Scalar(255, 0, 127), thickness);
 }
 
 int main() {
     try {
         cv::VideoCapture video = cv::VideoCapture(0);
-        cv::Mat tmp_frame, frame_ycrcb, frame_gray, out_vibe, bgmask, out_mog, img_top, img_bot, out_final;
+        cv::Mat tmp_frame;
+        cv::Mat frame_ycrcb;
+        cv::Mat frame_gray;
+        cv::Mat out_vibe;
+        cv::Mat bgmask;
+        cv::Mat out_mog;
+        cv::Mat img_top;
+        cv::Mat img_bot;
+        cv::Mat out_final;
 
         ViBe vibe;
         bool count = true;
@@ -102,7 +108,7 @@ int main() {
             if(count) {
                 vibe.init(frame_gray);
                 vibe.ProcessFirstFrame(frame_gray);
-                std::cout << "Training ViBe Success." << std::endl;
+                std::cout << "Training ViBe Success.\n";
                 count = false;
             } else {
                 vibe.Run(frame_gray);
@@ -115,9 +121,9 @@ int main() {
                 cv::resize(out_mog, out_mog, tmp_frame.size());
                 cv::resize(out_vibe, out_vibe, tmp_frame.size());
 
-                ensureColor(out_final);
-                ensureColor(out_mog);
-                ensureColor(out_vibe);
+                grayToBGR(out_final);
+                grayToBGR(out_mog);
+                grayToBGR(out_vibe);
 
                 addLabel(tmp_frame, "Video");
                 addLabel(out_final, "Final");
@@ -131,9 +137,7 @@ int main() {
                 imshow("video", out_final);
             }
 
-            //// End of Current frame processing
-
-            char keycode = (char) cv::waitKey(30);
+            int keycode = cv::waitKey(30);
             if(keycode == 27) { break; }
         }
 
