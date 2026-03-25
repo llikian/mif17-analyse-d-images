@@ -19,12 +19,10 @@ set(SOURCES
 
 
         # Other Sources
-
+        src/Vibe.cpp
 
         # Libraries
         ${LIBRARY_SOURCES}
-        src/Vibe.cpp
-        src/Vibe.h
 )
 
 set(INCLUDES
