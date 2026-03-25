@@ -77,6 +77,7 @@ int main() {
         cv::Mat img_top;
         cv::Mat img_bot;
         cv::Mat out_final;
+        cv::Mat out_mask_applied;
 
         ViBe vibe;
         bool count = true;
@@ -121,6 +122,9 @@ int main() {
                 cv::resize(out_mog, out_mog, tmp_frame.size());
                 cv::resize(out_vibe, out_vibe, tmp_frame.size());
 
+                out_mask_applied.resize(0);
+                cv::bitwise_and(tmp_frame, tmp_frame, out_mask_applied, out_final);
+
                 grayToBGR(out_final);
                 grayToBGR(out_mog);
                 grayToBGR(out_vibe);
@@ -135,6 +139,7 @@ int main() {
                 cv::vconcat(img_top, img_bot, out_final);
 
                 imshow("video", out_final);
+                imshow("render", out_mask_applied);
             }
 
             int keycode = cv::waitKey(30);
